@@ -12,7 +12,6 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     const setUserInDb = async () => {
-        console.log(loggedInUser?.email)
       try {
         await setDoc(
           doc(db, "users", loggedInUser?.email as string),
