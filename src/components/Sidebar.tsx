@@ -5,7 +5,7 @@ import styled from "styled-components";
 import ChatIcon from "@mui/icons-material/Chat";
 import MoreVerticalIcon from "@mui/icons-material/MoreVert";
 import LogoutIcon from "@mui/icons-material/Logout";
-import SearchIcon from "@mui/icons-material/Search";
+
 import Button from "@mui/material/Button";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../config/firebase";
@@ -13,7 +13,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
-import { TextField, DialogActions } from "@mui/material";
+import { TextField, DialogActions, Box } from "@mui/material";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useState } from "react";
 import * as EmailValidator from "email-validator";
@@ -21,11 +21,12 @@ import { addDoc, collection, query, where } from "firebase/firestore";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { Conversation } from "../types";
 import ConversationSelect from "./ConversationSelect";
+import SearchConversation from "./Search";
+import ActionUploadImage from "./UploadImage/ActionUploadImage";
 
 const StyledContainer = styled.div`
   height: 100vh;
-  min-width: 300px;
-  max-width: 350px;
+  width: 20vw;
   overflow-y: scroll;
   border-right: 1px solid whitesmoke;
 
@@ -49,14 +50,7 @@ const StyledHeader = styled.div`
   position: sticky;
   top: 0;
   background-color: white;
-  z-index: 1;
-`;
-
-const StyledSearch = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 15px;
-  border-radius: 2px;
+  z-index: 3;
 `;
 
 const StyledUserAvatar = styled(Avatar)`
@@ -64,12 +58,6 @@ const StyledUserAvatar = styled(Avatar)`
   :hover {
     opacity: 0.8;
   }
-`;
-
-const StyledSearchInput = styled.input`
-  outline: none;
-  border: none;
-  flex: 1;
 `;
 
 const StyledSidebarButton = styled(Button)`
@@ -105,12 +93,13 @@ const Sidebar = () => {
   );
 
   const isConversationAlreadyExists = (recipientEmail: string) =>
-    conversationsSnapshot?.docs.find((conversation) =>
-      (conversation.data() as Conversation).users.includes(recipientEmail)
-    );
+    conversationsSnapshot?.docs.find((conversation) => {
+      return (conversation.data() as Conversation).users.includes(
+        recipientEmail
+      );
+    });
 
   const isInvitingSelf = recipientEmail === loggedInUser?.email;
-
   const createConversation = async () => {
     if (!recipientEmail) return;
 
@@ -145,7 +134,7 @@ const Sidebar = () => {
           <StyledUserAvatar src={loggedInUser?.photoURL || ""} />
         </Tooltip>
 
-        <div>
+        <Box sx={{ display: "flex" }}>
           <IconButton>
             <ChatIcon />
           </IconButton>
@@ -155,13 +144,10 @@ const Sidebar = () => {
           <IconButton onClick={logout}>
             <LogoutIcon />
           </IconButton>
-        </div>
+        </Box>
       </StyledHeader>
 
-      <StyledSearch>
-        <SearchIcon />
-        <StyledSearchInput placeholder="Search in conversations" />
-      </StyledSearch>
+      <SearchConversation />
 
       <StyledSidebarButton
         onClick={() => {
@@ -174,6 +160,7 @@ const Sidebar = () => {
       {/* List of conversations */}
       {conversationsSnapshot?.docs.map((conversation) => (
         <ConversationSelect
+          onClose={() => {}}
           key={conversation.id}
           id={conversation.id}
           conversationUsers={(conversation.data() as Conversation).users}
