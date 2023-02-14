@@ -18,6 +18,7 @@ import Message from "./Message";
 import InsertEmoticonIcon from "@mui/icons-material/InsertEmoticon";
 import SendIcon from "@mui/icons-material/Send";
 import MicIcon from "@mui/icons-material/Mic";
+import ImageIcon from "@mui/icons-material/Image";
 import {
   KeyboardEventHandler,
   MouseEventHandler,
@@ -31,6 +32,7 @@ import {
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
+import { Tooltip } from "@mui/material";
 
 const StyledRecipientHeader = styled.div`
   position: sticky;
@@ -122,15 +124,15 @@ const ConversationScreen = ({
   const showMessages = () => {
     // If front-end is loading messages behind the scenes, display messages retrieved from Next SSR (passed down from [id].tsx)
     if (messagesLoading) {
-      return messages.map((message) => (
-        <Message key={message.id} message={message} />
+      return messages.map((message, index) => (
+        <Message key={index} message={message} />
       ));
     }
 
     // If front-end has finished loading messages, so now we have messagesSnapshot
     if (messagesSnapshot) {
-      return messagesSnapshot.docs.map((message) => (
-        <Message key={message.id} message={transformMessage(message)} />
+      return messagesSnapshot.docs.map((message, index) => (
+        <Message key={index} message={transformMessage(message)} />
       ));
     }
 
@@ -153,6 +155,7 @@ const ConversationScreen = ({
       sent_at: serverTimestamp(),
       text: newMessage,
       user: loggedInUser?.email,
+      isShow: true,
     });
 
     // reset input field
@@ -204,9 +207,6 @@ const ConversationScreen = ({
 
         <StyledHeaderIcons>
           <IconButton>
-            <AttachFileIcon />
-          </IconButton>
-          <IconButton>
             <MoreVertIcon />
           </IconButton>
         </StyledHeaderIcons>
@@ -220,17 +220,28 @@ const ConversationScreen = ({
 
       {/* Enter new message */}
       <StyledInputContainer>
-        <InsertEmoticonIcon />
+        <Tooltip title="Emotion">
+          <InsertEmoticonIcon />
+        </Tooltip>
         <StyledInput
           value={newMessage}
           onChange={(event) => setNewMessage(event.target.value)}
           onKeyDown={sendMessageOnEnter}
         />
         <IconButton onClick={sendMessageOnClick} disabled={!newMessage}>
-          <SendIcon />
+          <Tooltip title="Send">
+            <SendIcon />
+          </Tooltip>
         </IconButton>
         <IconButton>
-          <MicIcon />
+          <Tooltip title="Image">
+            <ImageIcon />
+          </Tooltip>
+        </IconButton>
+        <IconButton>
+          <Tooltip title="Microphone">
+            <MicIcon />
+          </Tooltip>
         </IconButton>
       </StyledInputContainer>
     </>
