@@ -21,6 +21,11 @@ export interface IMessage {
   isShow: boolean;
   isDeleted: boolean;
   icon: string;
+  urlImage: string;
+  urlFile: string;
+  nameFile: string;
+  urlMedia: string;
+  nameMedia: string;
 }
 
 export interface ISearchContext {

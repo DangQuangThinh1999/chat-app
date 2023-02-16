@@ -12,7 +12,7 @@ import AttachFileIcon from "@mui/icons-material/AttachFile";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useRouter } from "next/router";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, db } from "../config/firebase";
+import { auth, db, storage } from "../config/firebase";
 import { useCollection } from "react-firebase-hooks/firestore";
 import Message from "./Message";
 import InsertEmoticonIcon from "@mui/icons-material/InsertEmoticon";
@@ -24,6 +24,7 @@ import {
   MouseEventHandler,
   useRef,
   useState,
+  ChangeEvent,
 } from "react";
 import {
   addDoc,
@@ -32,8 +33,12 @@ import {
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
-import { Tooltip } from "@mui/material";
+import CardMedia from "@mui/material/CardMedia";
+import { Link, Tooltip } from "@mui/material";
 
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+
+import { useSnackbar } from "notistack";
 const StyledRecipientHeader = styled.div`
   position: sticky;
   background-color: white;
@@ -106,9 +111,11 @@ const ConversationScreen = ({
   conversation: Conversation;
   messages: IMessage[];
 }) => {
+  const { enqueueSnackbar } = useSnackbar();
   const [newMessage, setNewMessage] = useState("");
   const [loggedInUser, _loading, _error] = useAuthState(auth);
-
+  const [image, setImage] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null); // progress // Handle file upload event and update state
   const conversationUsers = conversation.users;
 
   const { recipientEmail, recipient } = useRecipient(conversationUsers);
@@ -186,7 +193,139 @@ const ConversationScreen = ({
   const scrollToBottom = () => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+  //--------------------------Handle Image-------------------------------
 
+  const handleChangeImage = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files != null) {
+      handleUploadImage(e.target.files[0]); //error
+    }
+  };
+  const handleUploadImage = (value: File) => {
+    if (value !== null) {
+      // Creating a storage reference
+
+      const storageReference = ref(storage, value?.name);
+
+      // Creating an upload task
+      const uploadTask = uploadBytesResumable(storageReference, value);
+
+      // Monitoring upload progress
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const percent = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+
+          // update progress
+          if (percent === 100) {
+            enqueueSnackbar("This is a success message Photo!", {
+              variant: "success",
+            });
+          }
+        },
+        (err) => console.log(err),
+        async () => {
+          // download url
+          let img = await getDownloadURL(uploadTask.snapshot.ref).then(
+            (url) => {
+              return url;
+            }
+          );
+
+          await setDoc(
+            doc(db, "users", loggedInUser?.email as string),
+            {
+              lastSeen: serverTimestamp(),
+            },
+            { merge: true }
+          ); // just update what is changed
+
+          // add new message to 'messages' collection
+          await addDoc(collection(db, "messages"), {
+            conversation_id: conversationId,
+            sent_at: serverTimestamp(),
+            text: newMessage,
+            user: loggedInUser?.email,
+            urlImage: img,
+            isShow: true,
+          });
+          setImage(null);
+          setNewMessage("");
+          // scroll to bottom
+
+          scrollToBottom();
+        }
+      );
+    } // progress can be paused and resumed. It also exposes progress updates. // Receives the storage reference and the file to upload.
+  };
+  //--------------------------Handle File-------------------------------
+
+  const handleChangeFile = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files != null) {
+      handleUploadFile(e.target.files[0]); //error
+    }
+  };
+  const handleUploadFile = (value: File) => {
+    if (value !== null) {
+      // Creating a storage reference
+
+      const storageReference = ref(storage, value?.name);
+
+      // Creating an upload task
+      const uploadTask = uploadBytesResumable(storageReference, value);
+
+      // Monitoring upload progress
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const percent = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+
+          // update progress
+          if (percent === 100) {
+            enqueueSnackbar("This is a success message File!", {
+              variant: "success",
+            });
+          }
+        },
+        (err) => console.log(err),
+        async () => {
+          // download url
+          let urlFile = await getDownloadURL(uploadTask.snapshot.ref).then(
+            (url) => {
+              return url;
+            }
+          );
+
+          await setDoc(
+            doc(db, "users", loggedInUser?.email as string),
+            {
+              lastSeen: serverTimestamp(),
+            },
+            { merge: true }
+          ); // just update what is changed
+
+          // add new message to 'messages' collection
+          await addDoc(collection(db, "messages"), {
+            conversation_id: conversationId,
+            sent_at: serverTimestamp(),
+            text: newMessage,
+            user: loggedInUser?.email,
+            urlFile: urlFile,
+            nameFile: value.name,
+            isShow: true,
+          });
+          setFile(null);
+          setNewMessage("");
+          // scroll to bottom
+
+          scrollToBottom();
+        }
+      );
+    } // progress can be paused and resumed. It also exposes progress updates. // Receives the storage reference and the file to upload.
+  };
   return (
     <>
       <StyledRecipientHeader>
@@ -206,6 +345,14 @@ const ConversationScreen = ({
         </StyledHeaderInfo>
 
         <StyledHeaderIcons>
+          <IconButton
+            color="primary"
+            aria-label="upload file"
+            component="label"
+          >
+            <AttachFileIcon />
+            <input hidden type="file" onChange={handleChangeFile} />
+          </IconButton>
           <IconButton>
             <MoreVertIcon />
           </IconButton>
@@ -233,10 +380,18 @@ const ConversationScreen = ({
             <SendIcon />
           </Tooltip>
         </IconButton>
-        <IconButton>
-          <Tooltip title="Image">
-            <ImageIcon />
-          </Tooltip>
+        <IconButton
+          color="primary"
+          aria-label="upload picture"
+          component="label"
+        >
+          <ImageIcon />
+          <input
+            hidden
+            accept="image/*"
+            type="file"
+            onChange={handleChangeImage}
+          />
         </IconButton>
         <IconButton>
           <Tooltip title="Microphone">

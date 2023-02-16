@@ -9,6 +9,8 @@ import TooltipMessage from "./TooltipMessage";
 import Emotion from "./TooltipMessage/IconsMessage/Emotion";
 import MessageRemove from "./TooltipMessage/MessageRemove";
 import RemoveMessageForYou from "./TooltipMessage/RemoveMessageForYou";
+import ShowFile from "./UploadFile/ShowFile";
+import ShowFileImage from "./UploadImage/ShowFileImage";
 
 interface Props {
   messages: IMessage[];
@@ -86,6 +88,16 @@ const Message = ({ message }: { message: IMessage }) => {
       {message.isShow ? (
         <TooltipMessage message={message} onClick={handleDeletedMessage}>
           <MessageType>
+            {message.urlFile ? (
+              <ShowFile url={message.urlFile}>{message.nameFile}</ShowFile>
+            ) : (
+              <Box sx={{ display: "none" }}></Box>
+            )}
+            {message.urlImage ? (
+              <ShowFileImage value={message.urlImage} />
+            ) : (
+              <Box sx={{ display: "none" }}></Box>
+            )}
             {message.text}
             <StyledTimestamp>Sent:{message.sent_at} </StyledTimestamp>
             {message.icon ? (
