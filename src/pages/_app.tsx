@@ -6,7 +6,7 @@ import { auth, db } from "../config/firebase";
 import Loading from "../components/Loading";
 import { useEffect } from "react";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-
+import { SnackbarProvider } from "notistack";
 function MyApp({ Component, pageProps }: AppProps) {
   const [loggedInUser, loading, _error] = useAuthState(auth);
 
@@ -36,7 +36,11 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   if (!loggedInUser) return <Login />;
 
-  return <Component {...pageProps} />;
+  return (
+    <SnackbarProvider maxSnack={3}>
+      <Component {...pageProps} />
+    </SnackbarProvider>
+  );
 }
 
 export default MyApp;

@@ -22,7 +22,6 @@ import { useCollection } from "react-firebase-hooks/firestore";
 import { Conversation } from "../types";
 import ConversationSelect from "./ConversationSelect";
 import SearchConversation from "./Search";
-import ActionUploadImage from "./UploadImage/ActionUploadImage";
 
 const StyledContainer = styled.div`
   height: 100vh;
