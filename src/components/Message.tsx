@@ -11,12 +11,9 @@ import MessageRemove from "./TooltipMessage/MessageRemove";
 import RemoveMessageForYou from "./TooltipMessage/RemoveMessageForYou";
 import ShowFile from "./UploadFile/ShowFile";
 import ShowFileImage from "./UploadImage/ShowFileImage";
+import ShowMedia from "./UploadMedia/ShowMedia";
 
-interface Props {
-  messages: IMessage[];
-}
-
-const StyledMessage = styled.p`
+const StyledMessage = styled.div`
   width: fit-content;
   word-break: break-all;
   max-width: 90%;
@@ -45,7 +42,13 @@ const StyledTimestamp = styled.span`
   right: 0;
   text-align: right;
 `;
-const StyledRemoveMessage = styled(StyledMessage)`
+const StyledRemoveMessageRight = styled(StyledMessage)`
+  background-color: "#e5ded8";
+  border: 1px solid;
+`;
+const StyledRemoveMessageLeft = styled(StyledMessage)`
+  margin-left: auto;
+
   background-color: "#e5ded8";
   border: 1px solid;
 `;
@@ -88,6 +91,11 @@ const Message = ({ message }: { message: IMessage }) => {
       {message.isShow ? (
         <TooltipMessage message={message} onClick={handleDeletedMessage}>
           <MessageType>
+            {message.urlMedia ? (
+              <ShowMedia name={message.nameMedia} url={message.urlMedia} />
+            ) : (
+              <Box sx={{ display: "none" }}></Box>
+            )}
             {message.urlFile ? (
               <ShowFile url={message.urlFile}>{message.nameFile}</ShowFile>
             ) : (

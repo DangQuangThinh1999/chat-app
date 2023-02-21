@@ -5,7 +5,6 @@ import { Conversation, IMessage } from "../types";
 import {
   convertFirestoreTimestampToString,
   generateQueryGetMessages,
-  transformMessage,
 } from "../utils/getMessagesInConversation";
 import RecipientAvatar from "./RecipientAvatar";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
@@ -14,8 +13,6 @@ import { useRouter } from "next/router";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, db, storage } from "../config/firebase";
 import { useCollection } from "react-firebase-hooks/firestore";
-import Message from "./Message";
-import InsertEmoticonIcon from "@mui/icons-material/InsertEmoticon";
 import SendIcon from "@mui/icons-material/Send";
 import MicIcon from "@mui/icons-material/Mic";
 import ImageIcon from "@mui/icons-material/Image";
@@ -30,15 +27,24 @@ import {
   addDoc,
   collection,
   doc,
+  query,
   serverTimestamp,
   setDoc,
+  where,
 } from "firebase/firestore";
-import CardMedia from "@mui/material/CardMedia";
-import { Link, Tooltip } from "@mui/material";
+
+import { Box, ClickAwayListener, Tooltip } from "@mui/material";
 
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-
+import { EmojiClickData } from "emoji-picker-react";
 import { useSnackbar } from "notistack";
+import Image from "next/image";
+import MessageConversation from "./MessageConversation";
+
+import EmojiPicker from "emoji-picker-react";
+import { Paper } from "@material-ui/core";
+import MoreTooltipConversation from "./TooltipConversation";
+
 const StyledRecipientHeader = styled.div`
   position: sticky;
   background-color: white;
@@ -111,11 +117,10 @@ const ConversationScreen = ({
   conversation: Conversation;
   messages: IMessage[];
 }) => {
+  const [showPicker, setShowPicker] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const [newMessage, setNewMessage] = useState("");
   const [loggedInUser, _loading, _error] = useAuthState(auth);
-  const [image, setImage] = useState<File | null>(null);
-  const [file, setFile] = useState<File | null>(null); // progress // Handle file upload event and update state
   const conversationUsers = conversation.users;
 
   const { recipientEmail, recipient } = useRecipient(conversationUsers);
@@ -128,24 +133,15 @@ const ConversationScreen = ({
   const [messagesSnapshot, messagesLoading, __error] =
     useCollection(queryGetMessages);
 
-  const showMessages = () => {
-    // If front-end is loading messages behind the scenes, display messages retrieved from Next SSR (passed down from [id].tsx)
-    if (messagesLoading) {
-      return messages.map((message, index) => (
-        <Message key={index} message={message} />
-      ));
-    }
+  const queryGetConversationsForCurrentUser = query(
+    collection(db, "conversations"),
+    where("users", "array-contains", recipientEmail)
+  );
+  const [conversationsSnapshot, ,] = useCollection(
+    queryGetConversationsForCurrentUser
+  );
 
-    // If front-end has finished loading messages, so now we have messagesSnapshot
-    if (messagesSnapshot) {
-      return messagesSnapshot.docs.map((message, index) => (
-        <Message key={index} message={transformMessage(message)} />
-      ));
-    }
-
-    return null;
-  };
-
+  let nickNameUser = conversationsSnapshot?.docs[0].data().nickNameUser;
   const addMessageToDbAndUpdateLastSeen = async () => {
     // update last seen in 'users' collection
     await setDoc(
@@ -197,7 +193,9 @@ const ConversationScreen = ({
 
   const handleChangeImage = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files != null) {
-      handleUploadImage(e.target.files[0]); //error
+      handleUploadImage(e.target.files[0]);
+      e.target.value = "";
+      //error
     }
   };
   const handleUploadImage = (value: File) => {
@@ -245,13 +243,11 @@ const ConversationScreen = ({
           await addDoc(collection(db, "messages"), {
             conversation_id: conversationId,
             sent_at: serverTimestamp(),
-            text: newMessage,
             user: loggedInUser?.email,
             urlImage: img,
             isShow: true,
           });
-          setImage(null);
-          setNewMessage("");
+
           // scroll to bottom
 
           scrollToBottom();
@@ -263,8 +259,11 @@ const ConversationScreen = ({
 
   const handleChangeFile = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files != null) {
-      handleUploadFile(e.target.files[0]); //error
+      if (e.target.files[0].type === "video/mp4") {
+        handleUploadMedia(e.target.files[0]);
+      } else handleUploadFile(e.target.files[0]);
     }
+    e.target.value = "";
   };
   const handleUploadFile = (value: File) => {
     if (value !== null) {
@@ -317,7 +316,6 @@ const ConversationScreen = ({
             nameFile: value.name,
             isShow: true,
           });
-          setFile(null);
           setNewMessage("");
           // scroll to bottom
 
@@ -326,6 +324,71 @@ const ConversationScreen = ({
       );
     } // progress can be paused and resumed. It also exposes progress updates. // Receives the storage reference and the file to upload.
   };
+  //--------------------------Handle Media-------------------------------
+
+  const handleUploadMedia = (value: File) => {
+    if (value !== null) {
+      // Creating a storage reference
+
+      const storageReference = ref(storage, value?.name);
+
+      // Creating an upload task
+      const uploadTask = uploadBytesResumable(storageReference, value);
+
+      // Monitoring upload progress
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const percent = Math.round(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+
+          // update progress
+          if (percent === 100) {
+            enqueueSnackbar("This is a success message Media!", {
+              variant: "success",
+            });
+          }
+        },
+        (err) => console.log(err),
+        async () => {
+          // download url
+          let urlMedia = await getDownloadURL(uploadTask.snapshot.ref).then(
+            (url) => {
+              return url;
+            }
+          );
+
+          await setDoc(
+            doc(db, "users", loggedInUser?.email as string),
+            {
+              lastSeen: serverTimestamp(),
+            },
+            { merge: true }
+          ); // just update what is changed
+
+          // add new message to 'messages' collection
+          await addDoc(collection(db, "messages"), {
+            conversation_id: conversationId,
+            sent_at: serverTimestamp(),
+            user: loggedInUser?.email,
+            urlMedia: urlMedia,
+            nameMedia: value.name,
+            isShow: true,
+          });
+
+          // scroll to bottom
+
+          scrollToBottom();
+        }
+      );
+    } // progress can be paused and resumed. It also exposes progress updates. // Receives the storage reference and the file to upload.
+  };
+  //-------------------------HANDLE EMOJI ----------------
+  const onEmojiClick = (emojiObject: EmojiClickData, event: MouseEvent) => {
+    setNewMessage((prevInput) => prevInput + emojiObject.emoji);
+  };
+
   return (
     <>
       <StyledRecipientHeader>
@@ -335,7 +398,7 @@ const ConversationScreen = ({
         />
 
         <StyledHeaderInfo>
-          <StyledH3>{recipientEmail}</StyledH3>
+          <StyledH3>{nickNameUser ? nickNameUser : recipientEmail}</StyledH3>
           {recipient && (
             <span>
               Last active:{" "}
@@ -353,14 +416,18 @@ const ConversationScreen = ({
             <AttachFileIcon />
             <input hidden type="file" onChange={handleChangeFile} />
           </IconButton>
-          <IconButton>
+          <MoreTooltipConversation nickName={{ recipientEmail, recipient }}>
             <MoreVertIcon />
-          </IconButton>
+          </MoreTooltipConversation>
         </StyledHeaderIcons>
       </StyledRecipientHeader>
 
       <StyledMessageContainer>
-        {showMessages()}
+        <MessageConversation
+          messagesLoading={messagesLoading}
+          messagesSnapshot={messagesSnapshot}
+          messages={messages}
+        />
         {/* for auto scroll to the end when a new message is sent */}
         <EndOfMessagesForAutoScroll ref={endOfMessagesRef} />
       </StyledMessageContainer>
@@ -368,7 +435,33 @@ const ConversationScreen = ({
       {/* Enter new message */}
       <StyledInputContainer>
         <Tooltip title="Emotion">
-          <InsertEmoticonIcon />
+          <Box sx={{ width: 20, height: 20, position: "relative" }}>
+            {showPicker && (
+              <ClickAwayListener
+                onClickAway={() => setShowPicker((val) => !val)}
+              >
+                <Box sx={{ position: "absolute", bottom: 30, left: -10 }}>
+                  <Paper elevation={8}>
+                    <EmojiPicker
+                      height={500}
+                      width={400}
+                      onEmojiClick={onEmojiClick}
+                    />
+                  </Paper>
+                </Box>
+              </ClickAwayListener>
+            )}
+            <Image
+              onClick={() => setShowPicker((val) => !val)}
+              src="https://icons.getbootstrap.com/assets/icons/emoji-smile.svg"
+              fill
+              alt="emotion-icon"
+              style={{
+                objectFit: "contain",
+                position: "absolute",
+              }}
+            />
+          </Box>
         </Tooltip>
         <StyledInput
           value={newMessage}
