@@ -1,7 +1,8 @@
+import { useSearchContext } from "@/contexts/SearchContext";
 import { useRouter } from "next/router";
 import styled from "styled-components";
 import { useRecipient } from "../hooks/useRecipient";
-import { Conversation } from "../types";
+import { Conversation, SearchReducerActionType } from "../types";
 import RecipientAvatar from "./RecipientAvatar";
 
 const StyledContainer = styled.div`
@@ -19,12 +20,13 @@ const StyledContainer = styled.div`
 const ConversationSelect = ({
   id,
   conversationUsers,
+  onClose,
 }: {
   id: string;
   conversationUsers: Conversation["users"];
+  onClose: () => void;
 }) => {
   const { recipient, recipientEmail } = useRecipient(conversationUsers);
-
   const router = useRouter();
 
   const onSelectConversation = () => {
@@ -32,7 +34,12 @@ const ConversationSelect = ({
   };
 
   return (
-    <StyledContainer onClick={onSelectConversation}>
+    <StyledContainer
+      onClick={() => {
+        onSelectConversation();
+        onClose();
+      }}
+    >
       <RecipientAvatar recipient={recipient} recipientEmail={recipientEmail} />
       <span>{recipientEmail}</span>
     </StyledContainer>

@@ -1,3 +1,5 @@
+import SearchContextProvider from "@/contexts/SearchContext";
+import { display } from "@mui/system";
 import { doc, getDoc, getDocs } from "firebase/firestore";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
@@ -12,7 +14,6 @@ import {
   transformMessage,
 } from "../../utils/getMessagesInConversation";
 import { getRecipientEmail } from "../../utils/getRecipientEmail";
-
 interface Props {
   conversation: Conversation;
   messages: IMessage[];
@@ -23,6 +24,7 @@ const StyledContainer = styled.div`
 `;
 
 const StyledConversationContainer = styled.div`
+  width: 80vw;
   flex-grow: 1;
   overflow: scroll;
   height: 100vh;
@@ -47,7 +49,10 @@ const Conversation = ({ conversation, messages }: Props) => {
         </title>
       </Head>
 
-      <Sidebar />
+      <SearchContextProvider>
+        {" "}
+        <Sidebar />
+      </SearchContextProvider>
 
       <StyledConversationContainer>
         <ConversationScreen conversation={conversation} messages={messages} />
