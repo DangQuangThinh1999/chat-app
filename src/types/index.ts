@@ -3,6 +3,8 @@ import { Dispatch } from "react";
 
 export interface Conversation {
   users: string[];
+  nickNameLogin: string | null;
+  nickNameUser: string | null;
 }
 
 export interface AppUser {
