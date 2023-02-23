@@ -16,18 +16,19 @@ export interface AppUser {
 export interface IMessage {
   id: string;
   conversation_id: string;
-  text: string;
+  text?: string;
   sent_at: string;
   user: string;
-  un_sent: string;
+  unSent: string;
   isShow: boolean;
   isDeleted: boolean;
   icon: string;
-  urlImage: string;
-  urlFile: string;
-  nameFile: string;
-  urlMedia: string;
-  nameMedia: string;
+  urlImage?: string;
+  urlFile?: string;
+  nameFile?: string;
+  urlMedia?: string;
+  nameMedia?: string;
+  listImage?: string;
 }
 
 export interface ISearchContext {
@@ -71,3 +72,7 @@ export type SearchReducerAction =
       type: SearchReducerActionType.setIdResultSearch;
       payload: string;
     };
+export interface INickName {
+  recipientEmail?: string;
+  recipient?: AppUser;
+}

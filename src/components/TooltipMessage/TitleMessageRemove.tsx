@@ -16,7 +16,7 @@ const TitleMessageRemove = ({ message }: Props) => {
       }}
     >
       <Box sx={{ mb: 0.5 }}>Sent: {message.sent_at}</Box>
-      <Box>UnSent: {message.un_sent}</Box>
+      <Box>UnSent: {message.unSent}</Box>
     </Box>
   );
 };

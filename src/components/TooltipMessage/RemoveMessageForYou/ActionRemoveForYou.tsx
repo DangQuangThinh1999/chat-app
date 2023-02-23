@@ -24,6 +24,7 @@ const ActionRemoveForYou = ({ onClick }: Props) => {
   return (
     <Box
       sx={{
+        position: "relative",
         padding: "1",
       }}
     >
@@ -35,13 +36,10 @@ const ActionRemoveForYou = ({ onClick }: Props) => {
               color: "white",
               backgroundColor: "rgba(0, 0, 0, 0.6)",
               padding: "10px 15px",
-              position: "absolute",
-              bottom: "-20px",
-              left: "-30px",
             },
           },
         }}
-        sx={{ position: "relative" }}
+        sx={{ position: "absolute", bottom: -20, left: 250 }}
         title="Remove"
       >
         <IconButton onClick={handleClickOpen}>

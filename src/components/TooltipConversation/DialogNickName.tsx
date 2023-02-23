@@ -9,13 +9,10 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import CloseIcon from "@mui/icons-material/Close";
 import InformationUsers from "./InformationUsers";
-import { AppUser } from "@/types";
+import { INickName } from "@/types";
 type Props = {
   children: JSX.Element;
-  nickName: {
-    recipientEmail: string | undefined;
-    recipient: AppUser | undefined;
-  };
+  nickName: INickName;
 };
 const ActionRemoveForYou = ({ children, nickName }: Props) => {
   const [open, setOpen] = React.useState(false);

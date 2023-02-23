@@ -3,12 +3,9 @@ import React from "react";
 import BorderColorIcon from "@mui/icons-material/BorderColor";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import DialogNickName from "./DialogNickName";
-import { AppUser } from "@/types";
+import { INickName } from "@/types";
 type Props = {
-  nickName: {
-    recipientEmail: string | undefined;
-    recipient: AppUser | undefined;
-  };
+  nickName: INickName;
 };
 const ActionMoreConversation = ({ nickName }: Props) => {
   return (
