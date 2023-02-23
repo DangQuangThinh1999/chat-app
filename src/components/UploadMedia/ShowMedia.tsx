@@ -17,8 +17,8 @@ interface ExpandMoreProps extends IconButtonProps {
 }
 
 type Props = {
-  name: string;
-  url: string;
+  name?: string;
+  url?: string;
 };
 
 export default function RecipeReviewCard({ name, url }: Props) {

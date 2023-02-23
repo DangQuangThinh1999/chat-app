@@ -4,7 +4,7 @@ import { Avatar, Box, IconButton, TextField, Typography } from "@mui/material";
 import BorderColorIcon from "@mui/icons-material/BorderColor";
 import CheckIcon from "@mui/icons-material/Check";
 import styled from "styled-components";
-import { AppUser } from "@/types";
+import { INickName } from "@/types";
 import RecipientAvatar from "../RecipientAvatar";
 import CloseIcon from "@mui/icons-material/Close";
 import { auth, db } from "@/config/firebase";
@@ -13,10 +13,7 @@ import { collection, doc, query, setDoc, where } from "firebase/firestore";
 import { useRouter } from "next/router";
 import { useCollection } from "react-firebase-hooks/firestore";
 type Props = {
-  nickName: {
-    recipientEmail: string | undefined;
-    recipient: AppUser | undefined;
-  };
+  nickName: INickName;
 };
 const StyledUserAvatar = styled(Avatar)`
   margin: 5px 0px 5px 5px;
@@ -144,7 +141,7 @@ const InformationUser = ({ nickName }: Props) => {
         }}
       >
         {/* image */}
-        <Box sx={{ mr: 5 }}>
+        <Box sx={{ mr: 12 }}>
           <RecipientAvatar
             recipient={nickName.recipient}
             recipientEmail={nickName.recipientEmail}

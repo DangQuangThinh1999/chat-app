@@ -44,6 +44,7 @@ import MessageConversation from "./MessageConversation";
 import EmojiPicker from "emoji-picker-react";
 import { Paper } from "@material-ui/core";
 import MoreTooltipConversation from "./TooltipConversation";
+import DropZone from "./DragDropFile/DropZone";
 
 const StyledRecipientHeader = styled.div`
   position: sticky;
@@ -117,6 +118,7 @@ const ConversationScreen = ({
   conversation: Conversation;
   messages: IMessage[];
 }) => {
+  const [percent, setPercent] = useState(0);
   const [showPicker, setShowPicker] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const [newMessage, setNewMessage] = useState("");
@@ -189,6 +191,9 @@ const ConversationScreen = ({
   const scrollToBottom = () => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+  const scrollAutoBottom = () => {
+    endOfMessagesRef.current?.scrollIntoView();
+  };
   //--------------------------Handle Image-------------------------------
 
   const handleChangeImage = (e: ChangeEvent<HTMLInputElement>) => {
@@ -214,7 +219,7 @@ const ConversationScreen = ({
           const percent = Math.round(
             (snapshot.bytesTransferred / snapshot.totalBytes) * 100
           );
-
+          setPercent(percent);
           // update progress
           if (percent === 100) {
             enqueueSnackbar("This is a success message Photo!", {
@@ -421,77 +426,81 @@ const ConversationScreen = ({
           </MoreTooltipConversation>
         </StyledHeaderIcons>
       </StyledRecipientHeader>
-
-      <StyledMessageContainer>
-        <MessageConversation
-          messagesLoading={messagesLoading}
-          messagesSnapshot={messagesSnapshot}
-          messages={messages}
-        />
-        {/* for auto scroll to the end when a new message is sent */}
-        <EndOfMessagesForAutoScroll ref={endOfMessagesRef} />
-      </StyledMessageContainer>
-
-      {/* Enter new message */}
-      <StyledInputContainer>
-        <Tooltip title="Emotion">
-          <Box sx={{ width: 20, height: 20, position: "relative" }}>
-            {showPicker && (
-              <ClickAwayListener
-                onClickAway={() => setShowPicker((val) => !val)}
-              >
-                <Box sx={{ position: "absolute", bottom: 30, left: -10 }}>
-                  <Paper elevation={8}>
-                    <EmojiPicker
-                      height={500}
-                      width={400}
-                      onEmojiClick={onEmojiClick}
-                    />
-                  </Paper>
-                </Box>
-              </ClickAwayListener>
-            )}
-            <Image
-              onClick={() => setShowPicker((val) => !val)}
-              src="https://icons.getbootstrap.com/assets/icons/emoji-smile.svg"
-              fill
-              alt="emotion-icon"
-              style={{
-                objectFit: "contain",
-                position: "absolute",
-              }}
+      {/*----------------------------- DROPZONE--------------------------------- */}
+      <DropZone onUpload={handleUploadImage} scrollToBottom={scrollAutoBottom}>
+        <Box sx={{ position: "relative" }}>
+          <StyledMessageContainer ref={scrollAutoBottom}>
+            <MessageConversation
+              messagesLoading={messagesLoading}
+              messagesSnapshot={messagesSnapshot}
+              messages={messages}
             />
-          </Box>
-        </Tooltip>
-        <StyledInput
-          value={newMessage}
-          onChange={(event) => setNewMessage(event.target.value)}
-          onKeyDown={sendMessageOnEnter}
-        />
-        <IconButton onClick={sendMessageOnClick} disabled={!newMessage}>
-          <Tooltip title="Send">
-            <SendIcon />
-          </Tooltip>
-        </IconButton>
-        <IconButton
-          color="primary"
-          aria-label="upload picture"
-          component="label"
-        >
-          <ImageIcon />
-          <input
-            hidden
-            accept="image/*"
-            type="file"
-            onChange={handleChangeImage}
-          />
-        </IconButton>
-        <IconButton>
-          <Tooltip title="Microphone">
-            <MicIcon />
-          </Tooltip>
-        </IconButton>
-      </StyledInputContainer>
+            {/* for auto scroll to the end when a new message is sent */}
+            <EndOfMessagesForAutoScroll ref={endOfMessagesRef} />
+          </StyledMessageContainer>
+
+          {/* Enter new message */}
+          <StyledInputContainer>
+            <Tooltip title="Emotion">
+              <Box sx={{ width: 20, height: 20, position: "relative" }}>
+                {showPicker && (
+                  <ClickAwayListener
+                    onClickAway={() => setShowPicker((val) => !val)}
+                  >
+                    <Box sx={{ position: "absolute", bottom: 30, left: -10 }}>
+                      <Paper elevation={8}>
+                        <EmojiPicker
+                          height={500}
+                          width={400}
+                          onEmojiClick={onEmojiClick}
+                        />
+                      </Paper>
+                    </Box>
+                  </ClickAwayListener>
+                )}
+                <Image
+                  onClick={() => setShowPicker((val) => !val)}
+                  src="https://icons.getbootstrap.com/assets/icons/emoji-smile.svg"
+                  fill
+                  alt="emotion-icon"
+                  style={{
+                    objectFit: "contain",
+                    position: "absolute",
+                  }}
+                />
+              </Box>
+            </Tooltip>
+            <StyledInput
+              value={newMessage}
+              onChange={(event) => setNewMessage(event.target.value)}
+              onKeyDown={sendMessageOnEnter}
+            />
+            <IconButton onClick={sendMessageOnClick} disabled={!newMessage}>
+              <Tooltip title="Send">
+                <SendIcon />
+              </Tooltip>
+            </IconButton>
+            <IconButton
+              color="primary"
+              aria-label="upload picture"
+              component="label"
+            >
+              <ImageIcon />
+              <input
+                hidden
+                accept="image/*"
+                type="file"
+                onChange={handleChangeImage}
+              />
+            </IconButton>
+            <IconButton>
+              <Tooltip title="Microphone">
+                <MicIcon />
+              </Tooltip>
+            </IconButton>
+          </StyledInputContainer>
+        </Box>
+      </DropZone>
     </>
   );
 };

@@ -1,13 +1,10 @@
-import { AppUser } from "@/types";
+import { INickName } from "@/types";
 import { Box, ClickAwayListener, IconButton, Tooltip } from "@mui/material";
 import React from "react";
 import ActionMoreConversation from "./ActionMoreConversation";
 type Props = {
   children: JSX.Element;
-  nickName: {
-    recipientEmail: string | undefined;
-    recipient: AppUser | undefined;
-  };
+  nickName: INickName;
 };
 const MoreTooltipConversation = ({ children, nickName }: Props) => {
   const [open, setOpen] = React.useState(false);

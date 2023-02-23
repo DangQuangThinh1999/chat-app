@@ -1,5 +1,4 @@
-import { Box } from "@mui/material";
-import { height } from "@mui/system";
+import { Box, Tooltip } from "@mui/material";
 import { doc, setDoc } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import styled from "styled-components";
@@ -17,10 +16,9 @@ const StyledMessage = styled.div`
   width: fit-content;
   word-break: break-all;
   max-width: 90%;
-  min-width: 30%;
-  padding: 15px 15px 30px;
+  padding: 15px 15px 15px;
   border-radius: 8px;
-  margin: 10px;
+  margin: 15px;
   position: relative;
 `;
 
@@ -70,7 +68,7 @@ const Message = ({ message }: { message: IMessage }) => {
       getId,
       {
         isShow: false,
-        un_sent: dataTime,
+        unSent: dataTime,
       },
       { merge: true } // just update what is changed
     );
@@ -91,45 +89,48 @@ const Message = ({ message }: { message: IMessage }) => {
       {message.isShow ? (
         <TooltipMessage message={message} onClick={handleDeletedMessage}>
           <MessageType>
-            {message.urlMedia ? (
-              <ShowMedia name={message.nameMedia} url={message.urlMedia} />
-            ) : (
-              <Box sx={{ display: "none" }}></Box>
-            )}
-            {message.urlFile ? (
-              <ShowFile url={message.urlFile}>{message.nameFile}</ShowFile>
-            ) : (
-              <Box sx={{ display: "none" }}></Box>
-            )}
-            {message.urlImage ? (
-              <ShowFileImage value={message.urlImage} />
-            ) : (
-              <Box sx={{ display: "none" }}></Box>
-            )}
-            {message.text}
-            <StyledTimestamp>Sent:{message.sent_at} </StyledTimestamp>
-            {message.icon ? (
-              <Box
-                sx={{
-                  position: "absolute",
-                  bottom: "-15px",
-                  right: "25px",
-                  borderRadius: "50%",
-                  backgroundColor: "white",
-                  width: "25px",
-                  height: "25px",
-                  textAlign: "center",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  display: "flex",
-                  color: "red",
-                }}
-              >
-                <Emotion message={message} />
+            <Tooltip title={`Sent:${message.sent_at}`}>
+              <Box>
+                {message.urlMedia ? (
+                  <ShowMedia name={message.nameMedia} url={message.urlMedia} />
+                ) : (
+                  <Box sx={{ display: "none" }}></Box>
+                )}
+                {message.urlFile ? (
+                  <ShowFile url={message.urlFile}>{message.nameFile}</ShowFile>
+                ) : (
+                  <Box sx={{ display: "none" }}></Box>
+                )}
+                {message.urlImage ? (
+                  <ShowFileImage value={message.urlImage} />
+                ) : (
+                  <Box sx={{ display: "none" }}></Box>
+                )}
+                {message.text}
+                {message.icon ? (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      bottom: "-15px",
+                      right: "25px",
+                      borderRadius: "50%",
+                      backgroundColor: "white",
+                      width: "25px",
+                      height: "25px",
+                      textAlign: "center",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      display: "flex",
+                      color: "red",
+                    }}
+                  >
+                    <Emotion message={message} />
+                  </Box>
+                ) : (
+                  <Box sx={{ display: "none" }}></Box>
+                )}
               </Box>
-            ) : (
-              <Box sx={{ display: "none" }}></Box>
-            )}
+            </Tooltip>
           </MessageType>
         </TooltipMessage>
       ) : (
@@ -137,7 +138,7 @@ const Message = ({ message }: { message: IMessage }) => {
           {message.isDeleted ? (
             <Box sx={{ display: "none" }}></Box>
           ) : (
-            <Box>
+            <Box sx={{ position: "relative" }}>
               <MessageRemove message={message}>
                 <MessageType>Message is removed</MessageType>
               </MessageRemove>
